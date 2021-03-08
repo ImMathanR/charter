@@ -1,12 +1,15 @@
 package dev.immathan.charter
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PathMeasure
 import android.graphics.PointF
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 
 class ChartView @JvmOverloads constructor(
@@ -14,6 +17,10 @@ class ChartView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyle: Int = 0
 ) : View(context, attrs, defStyle) {
+
+    private lateinit var path: Path
+    private lateinit var pathMeasure: PathMeasure
+    private var drawingPath: Path = Path()
 
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#AA888888")
@@ -30,14 +37,38 @@ class ChartView @JvmOverloads constructor(
         strokeWidth = 3.px.toFloat()
     }
 
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        refresh()
+    }
+
     override fun onDraw(canvas: Canvas?) {
         canvas ?: return
 
         drawChart(canvas)
-        drawValues(canvas)
+        canvas.drawPath(drawingPath, curvePaint)
     }
 
-    private fun drawValues(canvas: Canvas) {
+    fun refresh() {
+        drawingPath = Path()
+        pathMeasure = PathMeasure(drawValues(), false)
+        Log.d("Testing...", "Length: ${pathMeasure.length}")
+        setupPathDrawing()
+    }
+
+    private fun setupPathDrawing() {
+        val pathAnimator = ValueAnimator.ofFloat(0f, pathMeasure.length)
+        pathAnimator.duration = 1500
+
+        pathAnimator.addUpdateListener { animation ->
+            val value = animation.animatedValue as Float
+            pathMeasure.getSegment(0f, value, drawingPath, true)
+            invalidate()
+        }
+        pathAnimator.start()
+    }
+
+    private fun drawValues(): Path {
         val points = mutableListOf<DataPoint>()
         getDummyValue().forEachIndexed { index, value ->
             val diffWidth = width.toFloat() / 10
@@ -52,12 +83,9 @@ class ChartView @JvmOverloads constructor(
             }
             val controlPoint1 = PointF((points[index].x + points[index - 1].x) / 2, points[index - 1].y)
             val controlPoint2 = PointF((points[index].x + points[index - 1].x) / 2, points[index].y)
-            path.cubicTo(controlPoint1.x,controlPoint1.y, controlPoint2.x, controlPoint2.y, dataPoint.x, dataPoint.y)
+            path.cubicTo(controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, dataPoint.x, dataPoint.y)
         }
-        canvas.drawPath(path, curvePaint)
-        points.forEach {
-            canvas.drawPoint(it.x, it.y, axisPaint)
-        }
+        return path
     }
 
     private fun drawChart(canvas: Canvas) {
