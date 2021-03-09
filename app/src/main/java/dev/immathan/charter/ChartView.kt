@@ -9,7 +9,6 @@ import android.graphics.Path
 import android.graphics.PathMeasure
 import android.graphics.PointF
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import androidx.core.animation.doOnEnd
 
@@ -84,6 +83,7 @@ class ChartView @JvmOverloads constructor(
             val controlPoint2 = PointF((points[index].x + points[index - 1].x) / 2, points[index].y)
             path.cubicTo(controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, dataPoint.x, dataPoint.y)
         }
+
         return path
     }
 
