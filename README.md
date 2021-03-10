@@ -2,7 +2,7 @@
 
 A simple custom view demonstrating drawing line chart in canvas and animating it.
 
-### Showcase
+### Showcase (gif)
 ![Bezier curves path drawing animation](showcase/bezier_animation.gif "Bezier curves path drawing animation")
 
 ### Progress
